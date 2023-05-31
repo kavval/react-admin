@@ -32,6 +32,7 @@ import {
     useCreateSuggestionContext,
     EditActionsProps,
     usePermissions,
+    AutocompleteArrayInput,
 } from 'react-admin'; // eslint-disable-line import/no-unresolved
 import {
     Box,
@@ -80,6 +81,23 @@ const CreateCategory = ({
     );
 };
 
+const CreateLabel = ({
+    onAddChoice,
+}: {
+    onAddChoice: (record: any) => void;
+}) => {
+    const { filter, onCreate } = useCreateSuggestionContext();
+
+    React.useEffect(() => {
+        console.log('qsdqsd', filter);
+        const newChoice = { id: filter };
+        onAddChoice(newChoice);
+        onCreate(newChoice);
+    }, [filter, onCreate]);
+
+    return null;
+};
+
 const EditActions = ({ hasShow }: EditActionsProps) => (
     <TopToolbar>
         <CloneButton className="button-clone" />
@@ -101,6 +119,12 @@ const categories = [
 
 const PostEdit = () => {
     const { permissions } = usePermissions();
+    const [choices, setChoices] = React.useState([
+        { id: 'foo' },
+        { id: 'bar' },
+        { id: 'baz' },
+    ]);
+
     return (
         <Edit title={<PostTitle />} actions={<EditActions />}>
             <TabbedForm
@@ -122,6 +146,54 @@ const PostEdit = () => {
                             resettable
                         />
                     </SanitizedBox>
+                    <AutocompleteArrayInput
+                        fullWidth
+                        optionText="id"
+                        choices={choices}
+                        source="labels_with_onCreate"
+                        onCreate={(value: string | undefined) => {
+                            console.log({ value });
+                            const t = { id: value };
+                            setChoices(previousChoices =>
+                                previousChoices.concat(t)
+                            );
+                            return t;
+                        }}
+                    />
+                    <AutocompleteArrayInput
+                        fullWidth
+                        optionText="id"
+                        choices={choices}
+                        source="labels_with_create"
+                        create={
+                            <CreateLabel
+                                onAddChoice={newChoice => {
+                                    console.log({ newChoice });
+                                    setChoices(previousChoices =>
+                                        previousChoices.concat(newChoice)
+                                    );
+                                }}
+                            />
+                        }
+                    />
+                    <AutocompleteArrayInput
+                        fullWidth
+                        optionText="id"
+                        choices={choices}
+                        source="labels_with_createcategory"
+                        create={
+                            <CreateCategory
+                                // Added on the component because we have to update the choices
+                                // ourselves as we don't use a ReferenceInput
+                                onAddChoice={newChoice => {
+                                    console.log({ newChoice });
+                                    setChoices(oldChoices =>
+                                        oldChoices.concat(newChoice)
+                                    );
+                                }}
+                            />
+                        }
+                    />
                     <TextInput
                         multiline
                         fullWidth
